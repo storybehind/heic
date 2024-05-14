@@ -9,8 +9,6 @@ import (
 	"image"
 	"image/color"
 	"io"
-	"os"
-	"sync"
 
 	"github.com/tetratelabs/wazero"
 	"github.com/tetratelabs/wazero/api"
@@ -21,7 +19,6 @@ import (
 var heifWasm []byte
 
 func decode(r io.Reader, configOnly bool) (image.Image, image.Config, error) {
-	initializeOnce()
 
 	var err error
 	var cfg image.Config
@@ -227,10 +224,9 @@ var (
 	_free   api.Function
 	_decode api.Function
 
-	initializeOnce = sync.OnceFunc(initialize)
 )
 
-func initialize() {
+func init() {
 	ctx := context.Background()
 	rt := wazero.NewRuntime(ctx)
 
@@ -253,7 +249,7 @@ func initialize() {
 
 	wasi_snapshot_preview1.MustInstantiate(ctx, rt)
 
-	mod, err = rt.InstantiateModule(ctx, compiled, wazero.NewModuleConfig().WithStderr(os.Stderr).WithStdout(os.Stdout))
+	mod, err = rt.InstantiateModule(ctx, compiled, wazero.NewModuleConfig())
 	if err != nil {
 		panic(err)
 	}
